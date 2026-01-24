@@ -1,0 +1,115 @@
+﻿<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <title>واجبك | تسليمات الطلاب</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700&display=swap" rel="stylesheet">
+
+  <style>
+    body {
+      margin: 0;
+      font-family: 'Cairo', sans-serif;
+      background: #f8fafc;
+    }
+
+    header {
+      background: #1d4ed8;
+      color: white;
+      padding: 18px;
+      text-align: center;
+      font-size: 20px;
+      font-weight: bold;
+    }
+
+    .container {
+      max-width: 700px;
+      margin: 25px auto;
+      padding: 20px;
+    }
+
+    .card {
+      background: white;
+      padding: 18px;
+      border-radius: 18px;
+      box-shadow: 0 10px 20px rgba(0,0,0,0.06);
+      margin-bottom: 15px;
+    }
+
+    .card h4 {
+      margin: 0 0 8px;
+      color: #1e293b;
+    }
+
+    .card a {
+      color: #1d4ed8;
+      text-decoration: none;
+      font-weight: bold;
+    }
+
+    .empty {
+      text-align: center;
+      color: #64748b;
+      margin-top: 40px;
+    }
+  </style>
+</head>
+
+<body>
+
+<header>
+  تسليمات الطلاب
+</header>
+
+<div class="container" id="submissions">
+  <!-- التسليمات تظهر هنا -->
+
+
+</div>
+
+<script src="firebase.js"></script>
+
+<script>
+  const taskId = localStorage.getItem("currentTaskId");
+
+  auth.onAuthStateChanged(user => {
+    if (!user || !taskId) {
+      window.location.href = "login.html";
+      return;
+    }
+    loadSubmissions();
+  });
+
+  function loadSubmissions() {
+    db.collection("submissions")
+      .where("taskId", "==", taskId)
+      .orderBy("submittedAt", "desc")
+      .get()
+      .then(snapshot => {
+        const container = document.getElementById("submissions");
+        container.innerHTML = "";
+
+        if (snapshot.empty) {
+          container.innerHTML = "<p class='empty'>لا توجد تسليمات بعد</p>";
+          return;
+        }
+
+        snapshot.forEach(doc => {
+          const sub = doc.data();
+          const div = document.createElement("div");
+          div.className = "card";
+          div.innerHTML = `
+            <h4>طالب</h4>
+            <p>${sub.fileName}</p>
+            <a href="${sub.fileUrl}" target="_blank">📥 تحميل الملف</a>
+          `;
+          container.appendChild(div);
+        });
+      });
+  }
+</script>
+
+</body>
+</html>
+

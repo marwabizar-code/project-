@@ -1,0 +1,151 @@
+﻿<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <title>واجبك | واجباتي</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700&display=swap" rel="stylesheet">
+
+  <style>
+    body {
+      margin: 0;
+      font-family: 'Cairo', sans-serif;
+      background: #f1f5f9;
+    }
+
+    header {
+      background: #16a34a;
+      color: white;
+      padding: 18px;
+      text-align: center;
+      font-size: 20px;
+      font-weight: bold;
+    }
+
+    .container {
+      max-width: 650px;
+      margin: 25px auto;
+      padding: 20px;
+    }
+
+    .task {
+      background: white;
+      padding: 20px;
+      border-radius: 18px;
+      box-shadow: 0 8px 18px rgba(0,0,0,0.06);
+      margin-bottom: 20px;
+    }
+
+    .task h3 {
+      margin: 0 0 10px;
+      color: #1e293b;
+    }
+
+    .task p {
+      margin: 0 0 15px;
+      color: #475569;
+      font-size: 14px;
+    }
+
+    input[type="file"] {
+      margin-top: 10px;
+      width: 100%;
+    }
+
+    button {
+      margin-top: 12px;
+      padding: 12px;
+      width: 100%;
+      border-radius: 14px;
+      border: none;
+      background: #16a34a;
+      color: white;
+      font-weight: bold;
+      cursor: pointer;
+    }
+  </style>
+</head>
+
+<body>
+
+<header>
+  واجبات المجموعة
+</header>
+
+<div class="container" id="tasks">
+  <!-- الواجبات تظهر هنا -->
+</div>
+
+<script src="firebase.js"></script>
+
+<script>
+  const classId = localStorage.getItem("currentClassId");
+
+  auth.onAuthStateChanged(user => {
+    if (!user || !classId) {
+      window.location.href = "login.html";
+      return;
+    }
+    loadTasks(user.uid);
+  });
+
+  function loadTasks(studentId) {
+    db.collection("tasks")
+      .where("classId", "==", classId)
+      .orderBy("createdAt", "desc")
+      .get()
+      .then(snapshot => {
+        const container = document.getElementById("tasks");
+        container.innerHTML = "";
+
+        if (snapshot.empty) {
+          container.innerHTML = "<p>لا توجد واجبات بعد</p>";
+          return;
+        }
+
+        snapshot.forEach(doc => {
+          const task = doc.data();
+          const div = document.createElement("div");
+          div.className = "task";
+          div.innerHTML = `
+            <h3>${task.title}</h3>
+            <p>${task.description || ""}</p>
+            <input type="file" id="file-${doc.id}">
+            <button onclick="uploadWork('${doc.id}')">رفع الواجب</button>
+          `;
+          container.appendChild(div);
+        });
+      });
+  }
+
+  function uploadWork(taskId) {
+    const user = auth.currentUser;
+    const fileInput = document.getElementById("file-" + taskId);
+    const file = fileInput.files[0];
+
+    if (!file) {
+      alert("اختاري ملف أولاً");
+      return;
+    }
+
+    const ref = storage.ref(`submissions/${taskId}/${user.uid}/${file.name}`);
+
+    ref.put(file).then(snapshot => {
+      snapshot.ref.getDownloadURL().then(url => {
+        db.collection("submissions").add({
+          taskId: taskId,
+          studentId: user.uid,
+          fileUrl: url,
+          fileName: file.name,
+          submittedAt: firebase.firestore.FieldValue.serverTimestamp()
+        }).then(() => {
+          alert("تم رفع الواجب بنجاح");
+        });
+      });
+    });
+  }
+</script>
+
+</body>
+</html>

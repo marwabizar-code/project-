@@ -1,0 +1,118 @@
+﻿<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <title>واجبك | تسجيل الدخول</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700&display=swap" rel="stylesheet">
+
+  <style>
+    body {
+      margin: 0;
+      font-family: 'Cairo', sans-serif;
+      background: linear-gradient(135deg, #eef2ff, #f8fafc);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+    }
+
+    .box {
+      background: white;
+      padding: 30px;
+      border-radius: 20px;
+      width: 100%;
+      max-width: 380px;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+    }
+
+    h2 {
+      text-align: center;
+      color: #1d4ed8;
+      margin-bottom: 20px;
+    }
+
+    input, select {
+      width: 100%;
+      padding: 12px;
+      margin-bottom: 15px;
+      border-radius: 12px;
+      border: 2px solid #e5e7eb;
+      font-family: 'Cairo', sans-serif;
+    }
+
+    button {
+      width: 100%;
+      padding: 12px;
+      background: #1d4ed8;
+      color: white;
+      border: none;
+      border-radius: 14px;
+      font-size: 16px;
+      font-weight: bold;
+      cursor: pointer;
+    }
+
+    button:hover {
+      background: #1e40af;
+    }
+
+    footer {
+      margin-top: 15px;
+      text-align: center;
+      font-size: 13px;
+      color: #64748b;
+    }
+  </style>
+</head>
+
+<body>
+
+<div class="box">
+  <h2>تسجيل الدخول</h2>
+
+  <input type="email" id="email" placeholder="البريد الإلكتروني">
+  <input type="password" id="password" placeholder="كلمة المرور">
+
+  <select id="role">
+    <option value="teacher">معلم</option>
+    <option value="student">طالب</option>
+  </select>
+
+  <button onclick="login()">دخول / تسجيل</button>
+
+  <footer>
+    © 2026 واجبك | Marwa Bizar
+  </footer>
+</div>
+
+<!-- Firebase -->
+<script src="firebase.js"></script>
+
+<script>
+  function login() {
+    const email = document.getElementById("email").value;
+    const password = document.getElementById("password").value;
+    const role = document.getElementById("role").value;
+
+    auth.signInWithEmailAndPassword(email, password)
+      .then(() => go(role))
+      .catch(() => {
+        auth.createUserWithEmailAndPassword(email, password)
+          .then(() => go(role))
+          .catch(err => alert(err.message));
+      });
+  }
+
+  function go(role) {
+    if (role === "teacher") {
+      window.location.href = "teacher-dashboard.html";
+    } else {
+      window.location.href = "student-dashboard.html";
+    }
+  }
+</script>
+
+</body>
+</html>

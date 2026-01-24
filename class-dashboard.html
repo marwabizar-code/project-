@@ -1,0 +1,198 @@
+﻿<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <title>واجبك | إدارة المجموعة</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700&display=swap" rel="stylesheet">
+
+  <style>
+    body {
+      margin: 0;
+      font-family: 'Cairo', sans-serif;
+      background: #f8fafc;
+    }
+
+    header {
+      background: #1d4ed8;
+      color: white;
+      padding: 20px;
+      text-align: center;
+      font-size: 20px;
+      font-weight: bold;
+    }
+
+    .container {
+      max-width: 700px;
+      margin: 30px auto;
+      padding: 20px;
+    }
+
+    .box {
+      background: white;
+      padding: 20px;
+      border-radius: 18px;
+      box-shadow: 0 10px 20px rgba(0,0,0,0.06);
+      margin-bottom: 20px;
+    }
+
+    input, textarea {
+      width: 100%;
+      padding: 12px;
+      margin-top: 10px;
+      border-radius: 12px;
+      border: 2px solid #e5e7eb;
+      font-family: 'Cairo', sans-serif;
+    }
+
+    button {
+      margin-top: 15px;
+      padding: 12px 25px;
+      background: #1d4ed8;
+      color: white;
+      border: none;
+      border-radius: 14px;
+      font-weight: bold;
+      cursor: pointer;
+    }
+
+    .task {
+      border-bottom: 1px solid #e5e7eb;
+      padding: 10px 0;
+    }
+
+    .task h4 {
+      margin: 0;
+      color: #1d4ed8;
+    }
+
+    .task p {
+      margin: 5px 0 0;
+      color: #475569;
+      font-size: 14px;
+    }
+
+    .back {
+      text-align: center;
+      margin-top: 20px;
+    }
+
+    .back button {
+      background: #e0e7ff;
+      color: #1d4ed8;
+    }
+  </style>
+</head>
+
+<body>
+
+<header id="title">
+  إدارة المجموعة
+</header>
+
+<div class="container">
+
+  <!-- إضافة واجب -->
+  <div class="box">
+    <h3>إضافة واجب</h3>
+    <input type="text" id="taskTitle" placeholder="عنوان الواجب">
+    <textarea id="taskDesc" rows="3" placeholder="وصف الواجب"></textarea>
+    <button onclick="addTask()">إضافة</button>
+  </div>
+
+  <!-- قائمة الواجبات -->
+  <div class="box">
+    <h3>الواجبات</h3>
+    <div id="tasks"></div>
+  </div>
+
+  <div class="back">
+    <button onclick="back()">⬅ الرجوع</button>
+  </div>
+
+</div>
+
+<script src="firebase.js"></script>
+
+<script>
+  const classId = localStorage.getItem("currentClassId");
+
+  if (!classId) {
+    window.location.href = "my-classes.html";
+  }
+
+  auth.onAuthStateChanged(user => {
+    if (!user) {
+      window.location.href = "login.html";
+      return;
+    }
+
+    loadClass();
+    loadTasks();
+  });
+
+  function loadClass() {
+    db.collection("classes").doc(classId).get().then(doc => {
+      if (doc.exists) {
+        document.getElementById("title").innerText =
+          "إدارة المجموعة: " + doc.data().name;
+      }
+    });
+  }
+
+  function addTask() {
+    const title = document.getElementById("taskTitle").value;
+    const desc = document.getElementById("taskDesc").value;
+
+    if (!title) {
+      alert("اكتبي عنوان الواجب");
+      return;
+    }
+
+    db.collection("tasks").add({
+      classId: classId,
+      title: title,
+      desc: desc,
+      createdAt: new Date()
+    }).then(() => {
+      document.getElementById("taskTitle").value = "";
+      document.getElementById("taskDesc").value = "";
+      loadTasks();
+    });
+  }
+
+  function loadTasks() {
+    db.collection("tasks")
+      .where("classId", "==", classId)
+      .orderBy("createdAt", "desc")
+      .get()
+      .then(snapshot => {
+        const list = document.getElementById("tasks");
+        list.innerHTML = "";
+
+        if (snapshot.empty) {
+          list.innerHTML = "<p>لا توجد واجبات بعد</p>";
+          return;
+        }
+
+        snapshot.forEach(doc => {
+          const t = doc.data();
+          const div = document.createElement("div");
+          div.className = "task";
+          div.innerHTML = `
+            <h4>${t.title}</h4>
+            <p>${t.desc}</p>
+          `;
+          list.appendChild(div);
+        });
+      });
+  }
+
+  function back() {
+    window.location.href = "my-classes.html";
+  }
+</script>
+
+</body>
+</html>
